@@ -45,6 +45,7 @@ export function getStatusColor(status: string): string {
     needs_review: 'bg-amber-100 text-amber-700',
     error: 'bg-rose-100 text-rose-700',
     duplicate: 'bg-orange-100 text-orange-700',
+    non_receipt: 'bg-slate-100 text-slate-500',
     draft: 'bg-slate-100 text-slate-600',
     reviewed: 'bg-teal-100 text-teal-700',
   };
@@ -60,6 +61,7 @@ export function getStatusLabel(status: string): string {
     needs_review: 'Needs Review',
     error: 'Error',
     duplicate: 'Duplicate',
+    non_receipt: 'Not a Receipt',
     draft: 'Draft',
     reviewed: 'Reviewed',
   };

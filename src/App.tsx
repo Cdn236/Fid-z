@@ -103,6 +103,10 @@ export default function App() {
     (r) => r.status === 'uploaded' || r.status === 'extracting' || r.status === 'categorizing'
   );
 
+  const missingReceiptCount = appData.transactions.filter(
+    (t) => (t.status === 'booked' || t.status === 'reviewed') && !t.receipt_id
+  ).length;
+
   const notifications = [
     ...(needsReviewCount > 0 && prefs?.notify_review
       ? [{ id: 'review', text: `${needsReviewCount} transaction${needsReviewCount > 1 ? 's' : ''} need review`, time: 'now' }]
@@ -110,20 +114,25 @@ export default function App() {
     ...(processingReceipts.length > 0
       ? [{ id: 'processing', text: `${processingReceipts.length} receipt${processingReceipts.length > 1 ? 's' : ''} processing`, time: 'now' }]
       : []),
-    ...appData.receipts
-      .filter((r) => r.status === 'error')
-      .slice(0, 3)
-      .map((r) => ({ id: r.id, text: `Failed to process: ${r.file_name}`, time: formatRelativeTime(r.created_at) })),
+    ...(prefs?.notify_errors ?? true
+      ? appData.receipts
+        .filter((r) => r.status === 'error')
+        .slice(0, 3)
+        .map((r) => ({ id: r.id, text: `Failed to process: ${r.file_name}`, time: formatRelativeTime(r.created_at) }))
+      : []),
+    ...(missingReceiptCount > 0 && prefs?.notify_missing
+      ? [{ id: 'missing', text: `${missingReceiptCount} transaction${missingReceiptCount > 1 ? 's' : ''} missing a receipt`, time: 'now' }]
+      : []),
   ];
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+      <header className="bg-white border-b border-slate-200 px-4 py-5 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-2">
           <div>
-            <h1 className="text-base font-bold text-slate-900 leading-tight">Fidèz</h1>
-            <p className="text-[10px] text-slate-400 leading-tight">Your Ai Bookkeeping Assistant</p>
+            <h1 className="text-xl font-bold text-slate-900 leading-tight">Fidèz</h1>
+            <p className="text-xs text-slate-400 leading-tight">Your Ai Bookkeeping Assistant</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -143,7 +152,7 @@ export default function App() {
       {notifOpen && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setNotifOpen(false)} />
-          <div className="absolute right-4 top-14 z-40 w-80 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden">
+          <div className="absolute right-4 top-20 z-40 w-80 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden">
             <div className="px-4 py-3 border-b border-slate-100">
               <p className="text-sm font-semibold text-slate-800">Notifications</p>
             </div>
@@ -197,13 +206,15 @@ export default function App() {
               categories={appData.categories}
               receipts={appData.receipts}
               onRefresh={handleRefresh}
+              userCurrency={userCurrency}
             />
           )}
-          {activeTab === 'vendors' && <VendorsScreen onRefresh={handleRefresh} />}
+          {activeTab === 'vendors' && <VendorsScreen onRefresh={handleRefresh} userCurrency={userCurrency} />}
           {activeTab === 'reports' && (
             <ReportsScreen
               transactions={appData.transactions}
               categories={appData.categories}
+              userCurrency={userCurrency}
             />
           )}
           {activeTab === 'accounts' && (
@@ -216,6 +227,8 @@ export default function App() {
             <SettingsScreen
               onShowTerms={() => setShowLegal('terms')}
               onShowPrivacy={() => setShowLegal('privacy')}
+              userCurrency={userCurrency}
+              onPreferencesChanged={loadPrefs}
             />
           )}
         </div>

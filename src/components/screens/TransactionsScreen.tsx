@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Search, Filter, FileText, ChevronDown, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { Search, Filter, FileText, ChevronDown, ArrowUpCircle, ArrowDownCircle, X } from 'lucide-react';
 import type { Category, Receipt, Transaction } from '@/types';
+import { deleteTransaction } from '@/lib/db';
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from '@/lib/utils';
 
 interface Props {
@@ -8,15 +9,32 @@ interface Props {
   categories: Category[];
   receipts: Receipt[];
   onRefresh: () => void;
+  userCurrency?: string;
 }
 
-export default function TransactionsScreen({ transactions, categories, receipts }: Props) {
+export default function TransactionsScreen({ transactions, categories, receipts, onRefresh }: Props) {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteTransaction = async (transactionId: string) => {
+    setDeleting(true);
+    try {
+      await deleteTransaction(transactionId);
+      onRefresh();
+      if (expandedId === transactionId) setExpandedId(null);
+    } catch {
+      alert('Could not delete this transaction. Please try again.');
+    } finally {
+      setDeleting(false);
+      setDeletePendingId(null);
+    }
+  };
 
   const filtered = useMemo(() => {
     return transactions.filter((t) => {
@@ -225,11 +243,49 @@ export default function TransactionsScreen({ transactions, categories, receipts 
                         </div>
                       </div>
                     )}
+                    <button
+                      onClick={() => setDeletePendingId(txn.id)}
+                      disabled={deleting}
+                      className="mt-2 w-full py-2 bg-white border border-rose-200 text-rose-600 rounded-lg text-sm font-medium hover:bg-rose-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                    >
+                      <X className="w-4 h-4" />
+                      Delete Transaction
+                    </button>
                   </div>
                 )}
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Delete transaction confirmation */}
+      {deletePendingId && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setDeletePendingId(null)}>
+          <div className="bg-white rounded-2xl max-w-sm w-full p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="w-12 h-12 bg-rose-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <X className="w-6 h-6 text-rose-600" />
+            </div>
+            <h3 className="text-base font-bold text-slate-800 text-center">Delete this transaction?</h3>
+            <p className="text-sm text-slate-500 text-center mt-2">
+              This will permanently remove the transaction and its ledger entries. This cannot be undone.
+            </p>
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => setDeletePendingId(null)}
+                className="flex-1 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteTransaction(deletePendingId)}
+                disabled={deleting}
+                className="flex-1 py-2.5 bg-rose-600 text-white rounded-xl text-sm font-semibold hover:bg-rose-700 transition-colors disabled:opacity-50"
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -58,22 +58,54 @@ export async function fetchVendors(): Promise<Vendor[]> {
 }
 
 export async function fetchUserPreferences(): Promise<UserPreferences | null> {
+  // Use `.limit(1)` + newest-first ordering instead of `.maybeSingle()` so the app
+  // still works if an older bug left multiple preference rows for a user.
   const { data, error } = await supabase
     .from('user_preferences')
     .select('*')
-    .maybeSingle();
+    .order('created_at', { ascending: false })
+    .limit(1);
   if (error) throw error;
-  return data as UserPreferences | null;
+  return (data && data.length > 0 ? data[0] : null) as UserPreferences | null;
 }
 
 export async function upsertUserPreferences(prefs: Partial<UserPreferences>): Promise<void> {
-  const { error } = await supabase
+  // `user_preferences` has UNIQUE(user_id), and `id` is a generated uuid. A plain
+  // `.upsert()` defaults to matching on `id`, so passing no id inserted a brand-new
+  // row on every save instead of updating — silently breaking persistence. We fix
+  // this by (1) deleting any stale duplicate rows (repairing data created by that
+  // older bug), then (2) inserting a single fresh row. RLS scopes both calls to the
+  // current user's own rows.
+  const { data: existing, error: selErr } = await supabase
     .from('user_preferences')
-    .upsert({
-      ...prefs,
-      updated_at: new Date().toISOString(),
-    });
-  if (error) throw error;
+    .select('id')
+    .order('created_at', { ascending: false });
+  if (selErr) throw selErr;
+  const rows = existing as unknown as { id: string }[] | null;
+
+  // Delete any extra rows beyond the newest one (duplicates from the old bug).
+  if (rows && rows.length > 1) {
+    const idsToDelete = rows.slice(1).map((r: { id: string }) => r.id);
+    const { error: delErr } = await supabase
+      .from('user_preferences')
+      .delete()
+      .in('id', idsToDelete);
+    if (delErr) throw delErr;
+  }
+
+  if (rows && rows.length > 0) {
+    const { error } = await supabase
+      .from('user_preferences')
+      .update({ ...prefs, updated_at: new Date().toISOString() })
+      .eq('id', rows[0].id);
+    if (error) throw error;
+  } else {
+    // No row exists yet — create one. `user_id` defaults to auth.uid() in the schema.
+    const { error } = await supabase
+      .from('user_preferences')
+      .insert({ ...prefs, updated_at: new Date().toISOString() });
+    if (error) throw error;
+  }
 }
 
 export async function acceptTerms(): Promise<void> {
@@ -362,4 +394,52 @@ export async function updateCategory(
 export async function deleteCategory(id: string): Promise<void> {
   const { error } = await supabase.from('categories').delete().eq('id', id);
   if (error) throw error;
+}
+
+/**
+ * Flag a receipt document as NOT a receipt (e.g. a contract, ID, or unrelated
+ * document that was uploaded by mistake). It marks the receipt with the
+ * `non_receipt` status and records the action in the audit log. Any transaction
+ * that was generated from this receipt is also moved to `draft` so it does not
+ * pollute the books.
+ */
+export async function flagNonReceipt(receiptId: string): Promise<void> {
+  await supabase
+    .from('receipts')
+    .update({
+      status: 'non_receipt',
+      processing_progress: 100,
+      error_message: 'Flagged as not a receipt',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', receiptId);
+
+  await supabase
+    .from('transactions')
+    .update({ status: 'draft', updated_at: new Date().toISOString() })
+    .eq('receipt_id', receiptId);
+
+  await logAudit('receipt', receiptId, 'flag_non_receipt', {});
+}
+
+/** Un-flag a receipt that was previously marked as "not a receipt". */
+export async function unflagNonReceipt(receiptId: string): Promise<void> {
+  await supabase
+    .from('receipts')
+    .update({
+      status: 'uploaded',
+      processing_progress: 100,
+      error_message: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', receiptId);
+
+  await logAudit('receipt', receiptId, 'unflag_non_receipt', {});
+}
+
+/** Permanently delete a receipt document plus any generated transactions. */
+export async function deleteReceipt(receiptId: string): Promise<void> {
+  await supabase.from('transactions').delete().eq('receipt_id', receiptId);
+  await supabase.from('receipts').delete().eq('id', receiptId);
+  await logAudit('receipt', receiptId, 'delete', {});
 }

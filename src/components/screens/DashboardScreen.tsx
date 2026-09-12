@@ -9,14 +9,12 @@ interface Props {
   userCurrency: string;
 }
 
-type Period = 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'custom';
+type Period = 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 
 export default function DashboardScreen({ transactions, categories, userCurrency }: Props) {
   const [period, setPeriod] = useState<Period>('monthly');
-  const [customStart, setCustomStart] = useState('');
-  const [customEnd, setCustomEnd] = useState('');
 
-  const { start, end } = getPeriodRange(period, customStart, customEnd);
+  const { start, end } = getPeriodRange(period);
 
   const stats = useMemo(() => {
     const booked = transactions.filter((t) => t.status === 'booked' || t.status === 'reviewed');
@@ -102,18 +100,6 @@ export default function DashboardScreen({ transactions, categories, userCurrency
         }).reduce((s, t) => s + t.total, 0);
         chartData.push({ label: `Q${q + 1}`, expenses: qExpenses, income: qIncome });
       }
-    } else {
-      // custom - group by month
-      const months: { key: string; label: string; expenses: number; income: number }[] = [];
-      const cursor = new Date(start);
-      while (cursor <= end) {
-        const mKey = cursor.toISOString().slice(0, 7);
-        const mExpenses = expenses.filter((t) => t.transaction_date?.startsWith(mKey)).reduce((s, t) => s + t.total, 0);
-        const mIncome = income.filter((t) => t.transaction_date?.startsWith(mKey)).reduce((s, t) => s + t.total, 0);
-        months.push({ key: mKey, label: cursor.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }), expenses: mExpenses, income: mIncome });
-        cursor.setMonth(cursor.getMonth() + 1);
-      }
-      chartData.push(...months);
     }
 
     const maxChart = Math.max(...chartData.map((d) => Math.max(d.expenses, d.income)), 1);
@@ -150,7 +136,7 @@ export default function DashboardScreen({ transactions, categories, userCurrency
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-slate-400" />
           <div className="flex gap-1 bg-slate-100 rounded-lg p-1 overflow-x-auto">
-            {(['weekly', 'monthly', 'quarterly', 'yearly', 'custom'] as Period[]).map((p) => (
+            {(['weekly', 'monthly', 'quarterly', 'yearly'] as Period[]).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
@@ -164,30 +150,6 @@ export default function DashboardScreen({ transactions, categories, userCurrency
           </div>
         </div>
       </div>
-
-      {/* Custom date range */}
-      {period === 'custom' && (
-        <div className="flex gap-2 items-end">
-          <div>
-            <label className="text-xs font-medium text-slate-400 mb-1 block">From</label>
-            <input
-              type="date"
-              value={customStart}
-              onChange={(e) => setCustomStart(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-slate-400 mb-1 block">To</label>
-            <input
-              type="date"
-              value={customEnd}
-              onChange={(e) => setCustomEnd(e.target.value)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            />
-          </div>
-        </div>
-      )}
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-3 items-stretch">
@@ -209,7 +171,7 @@ export default function DashboardScreen({ transactions, categories, userCurrency
       {/* Cash flow chart */}
       <div className="bg-white rounded-2xl border border-slate-200 p-4">
         <h3 className="text-sm font-semibold text-slate-800 mb-4">
-          Cash Flow — {period === 'custom' ? 'Custom Range' : period.charAt(0).toUpperCase() + period.slice(1)}
+          Cash Flow — {period.charAt(0).toUpperCase() + period.slice(1)}
         </h3>
         <div className="flex items-end justify-between gap-2 h-40 overflow-x-auto">
           {stats.chartData.map((d, i) => (

@@ -1,13 +1,38 @@
 import { useState } from 'react';
-import { Shield, FileText, Check, ChevronRight, Loader2 } from 'lucide-react';
+import { Shield, FileText, Check, ChevronRight, Loader2, Camera, ListChecks, LayoutDashboard, FileBarChart } from 'lucide-react';
 import { acceptTerms } from '@/lib/db';
 
 interface Props {
   onAccepted: () => void;
 }
 
+type Step = 'welcome' | 'terms' | 'privacy' | 'done';
+
+const FEATURE_TILES: { icon: typeof Camera; title: string; description: string }[] = [
+  {
+    icon: Camera,
+    title: 'Snap or upload receipts',
+    description: 'Capture a receipt or upload a file and Fidèz extracts the details for you.',
+  },
+  {
+    icon: ListChecks,
+    title: 'AI categorizes automatically',
+    description: 'Transactions are auto-categorized and booked with confidence scores.',
+  },
+  {
+    icon: LayoutDashboard,
+    title: 'See your cash flow at a glance',
+    description: 'Track income, expenses and net cash flow on a live dashboard.',
+  },
+  {
+    icon: FileBarChart,
+    title: 'Export clean reports',
+    description: 'Generate P&L reports and export everything to CSV.',
+  },
+];
+
 export default function OnboardingScreen({ onAccepted }: Props) {
-  const [step, setStep] = useState<'terms' | 'privacy' | 'done'>('terms');
+  const [step, setStep] = useState<'welcome' | 'terms' | 'privacy' | 'done'>('welcome');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -29,11 +54,12 @@ export default function OnboardingScreen({ onAccepted }: Props) {
               <Shield className="w-7 h-7 text-white" />
             </div>
             <h1 className="text-xl font-bold text-white">Welcome to Fidèz</h1>
-            <p className="text-sm text-cyan-50 mt-1">Please review and accept our policies to continue</p>
+            <p className="text-sm text-cyan-50 mt-1">A quick tour, then a few things to review</p>
           </div>
 
           {/* Step indicator */}
           <div className="flex items-center justify-center gap-2 py-4 border-b border-slate-100">
+            <div className={`w-2 h-2 rounded-full transition-colors ${step === 'welcome' ? 'bg-cyan-500' : 'bg-slate-200'}`} />
             <div className={`w-2 h-2 rounded-full transition-colors ${step === 'terms' ? 'bg-cyan-500' : 'bg-slate-200'}`} />
             <div className={`w-2 h-2 rounded-full transition-colors ${step === 'privacy' ? 'bg-cyan-500' : 'bg-slate-200'}`} />
             <div className={`w-2 h-2 rounded-full transition-colors ${step === 'done' ? 'bg-cyan-500' : 'bg-slate-200'}`} />
@@ -41,6 +67,37 @@ export default function OnboardingScreen({ onAccepted }: Props) {
 
           {/* Content */}
           <div className="p-6">
+            {step === 'welcome' && (
+              <div>
+                <h2 className="text-base font-bold text-slate-800 mb-1">Welcome aboard! {'\u{1F44B}'}</h2>
+                <p className="text-sm text-slate-500 mb-4">
+                  Fidèz turns your receipts into a clear, organized bookkeeping system. Here's what you can do.
+                </p>
+                <div className="space-y-3">
+                  {FEATURE_TILES.map((tile) => {
+                    const Icon = tile.icon;
+                    return (
+                      <div key={tile.title} className="flex items-start gap-3 bg-slate-50 rounded-xl p-3">
+                        <div className="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Icon className="w-5 h-5 text-cyan-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-slate-800">{tile.title}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{tile.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={() => setStep('terms')}
+                  className="w-full mt-4 py-2.5 bg-cyan-600 text-white rounded-lg text-sm font-semibold hover:bg-cyan-700 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  Get Started <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
             {step === 'terms' && (
               <div>
                 <div className="flex items-center gap-2 mb-3">

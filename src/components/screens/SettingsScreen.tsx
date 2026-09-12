@@ -11,9 +11,11 @@ import { fetchUserPreferences, upsertUserPreferences } from '@/lib/db';
 interface Props {
   onShowTerms: () => void;
   onShowPrivacy: () => void;
+  userCurrency?: string;
+  onPreferencesChanged?: () => void;
 }
 
-export default function SettingsScreen({ onShowTerms, onShowPrivacy }: Props) {
+export default function SettingsScreen({ onShowTerms, onShowPrivacy, userCurrency, onPreferencesChanged }: Props) {
   const { user, signOut, updatePassword } = useAuth();
   const [prefs, setPrefs] = useState<UserPreferences | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,6 +50,9 @@ export default function SettingsScreen({ onShowTerms, onShowPrivacy }: Props) {
       await upsertUserPreferences(updates);
       setPrefs((prev) => prev ? { ...prev, ...updates } : null);
       await load();
+      // Notify the app so the selected currency / notification preferences
+      // propagate across the entire system immediately.
+      if (onPreferencesChanged) onPreferencesChanged();
     } finally {
       setSaving(false);
     }
@@ -116,7 +121,7 @@ export default function SettingsScreen({ onShowTerms, onShowPrivacy }: Props) {
               key={curr.code}
               onClick={() => updatePrefs({ currency: curr.code })}
               className={`px-2 py-2 rounded-lg text-xs font-medium border transition-colors ${
-                prefs?.currency === curr.code
+                (userCurrency || (prefs?.currency ?? 'USD')) === curr.code
                   ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
                   : 'border-slate-200 text-slate-600 hover:bg-slate-50'
               }`}
@@ -328,13 +333,15 @@ function ToggleRow({
       </div>
       <button
         onClick={() => onChange(!checked)}
+        role="switch"
+        aria-checked={checked}
         className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
           checked ? 'bg-cyan-500' : 'bg-slate-200'
         }`}
       >
         <span
-          className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-            checked ? 'translate-x-5' : 'translate-x-0.5'
+          className={`absolute top-0.5 left-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform ${
+            checked ? 'translate-x-5' : 'translate-x-0'
           }`}
         />
       </button>

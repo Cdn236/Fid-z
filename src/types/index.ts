@@ -23,7 +23,8 @@ export type ReceiptStatus =
   | 'booked'
   | 'needs_review'
   | 'error'
-  | 'duplicate';
+  | 'duplicate'
+  | 'non_receipt';
 
 export interface Receipt {
   id: string;

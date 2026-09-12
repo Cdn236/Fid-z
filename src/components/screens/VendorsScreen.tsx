@@ -6,9 +6,10 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 
 interface Props {
   onRefresh?: () => void;
+  userCurrency?: string;
 }
 
-export default function VendorsScreen({}: Props) {
+export default function VendorsScreen({ userCurrency }: Props) {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -59,7 +60,7 @@ export default function VendorsScreen({}: Props) {
             <TrendingUp className="w-4 h-4 text-emerald-600" />
           </div>
           <p className="text-xs text-slate-400">Total Spent</p>
-          <p className="text-base font-bold text-slate-900">{formatCurrency(totalSpent)}</p>
+          <p className="text-base font-bold text-slate-900">{formatCurrency(totalSpent, userCurrency)}</p>
         </div>
       </div>
 
@@ -90,7 +91,7 @@ export default function VendorsScreen({}: Props) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-slate-900">{formatCurrency(vendor.total_spent)}</p>
+                    <p className="text-sm font-bold text-slate-900">{formatCurrency(vendor.total_spent, userCurrency)}</p>
                     {vendor.last_visit && (
                       <p className="text-xs text-slate-400 flex items-center gap-1 justify-end">
                         <Calendar className="w-3 h-3" />

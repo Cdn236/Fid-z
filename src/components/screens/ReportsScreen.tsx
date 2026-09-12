@@ -6,11 +6,12 @@ import { formatCurrency, downloadCSV } from '@/lib/utils';
 interface Props {
   transactions: Transaction[];
   categories: Category[];
+  userCurrency?: string;
 }
 
 type Period = 'monthly' | 'quarterly' | 'yearly';
 
-export default function ReportsScreen({ transactions, categories }: Props) {
+export default function ReportsScreen({ transactions, categories, userCurrency }: Props) {
   const [period, setPeriod] = useState<Period>('monthly');
 
   const bookedTransactions = useMemo(
@@ -123,14 +124,14 @@ export default function ReportsScreen({ transactions, categories }: Props) {
             <TrendingUp className="w-4 h-4 text-emerald-600" />
           </div>
           <p className="text-xs text-slate-400">Total Income</p>
-          <p className="text-base font-bold text-slate-900">{formatCurrency(totalIncome)}</p>
+          <p className="text-base font-bold text-slate-900">{formatCurrency(totalIncome, userCurrency)}</p>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 p-3.5">
           <div className="w-8 h-8 bg-rose-50 rounded-lg flex items-center justify-center mb-2">
             <TrendingDown className="w-4 h-4 text-rose-600" />
           </div>
           <p className="text-xs text-slate-400">Total Expenses</p>
-          <p className="text-base font-bold text-slate-900">{formatCurrency(totalExpenses)}</p>
+          <p className="text-base font-bold text-slate-900">{formatCurrency(totalExpenses, userCurrency)}</p>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 p-3.5">
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 ${netProfit >= 0 ? 'bg-emerald-50' : 'bg-rose-50'}`}>
@@ -138,7 +139,7 @@ export default function ReportsScreen({ transactions, categories }: Props) {
           </div>
           <p className="text-xs text-slate-400">Net P&L</p>
           <p className={`text-base font-bold ${netProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {formatCurrency(netProfit)}
+            {formatCurrency(netProfit, userCurrency)}
           </p>
         </div>
       </div>
@@ -175,24 +176,24 @@ export default function ReportsScreen({ transactions, categories }: Props) {
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-semibold text-slate-700">{periodKey}</span>
                   <span className={`text-sm font-bold ${data.income - data.expenses >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {formatCurrency(data.income - data.expenses)}
+                    {formatCurrency(data.income - data.expenses, userCurrency)}
                   </span>
                 </div>
                 <div className="flex items-end gap-1 h-12 mb-2">
                   <div
                     className="flex-1 bg-emerald-200 rounded-t transition-all duration-500 hover:bg-emerald-300"
                     style={{ height: `${(data.income / maxBar) * 100}%` }}
-                    title={`Income: ${formatCurrency(data.income)}`}
+                    title={`Income: ${formatCurrency(data.income, userCurrency)}`}
                   />
                   <div
                     className="flex-1 bg-rose-200 rounded-t transition-all duration-500 hover:bg-rose-300"
                     style={{ height: `${(data.expenses / maxBar) * 100}%` }}
-                    title={`Expenses: ${formatCurrency(data.expenses)}`}
+                    title={`Expenses: ${formatCurrency(data.expenses, userCurrency)}`}
                   />
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>Income: {formatCurrency(data.income)}</span>
-                  <span>Expenses: {formatCurrency(data.expenses)}</span>
+                  <span>Income: {formatCurrency(data.income, userCurrency)}</span>
+                  <span>Expenses: {formatCurrency(data.expenses, userCurrency)}</span>
                 </div>
               </div>
             ))}
@@ -227,7 +228,7 @@ export default function ReportsScreen({ transactions, categories }: Props) {
                   <div key={name} className="px-4 py-3">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-sm font-medium text-slate-600">{name}</span>
-                      <span className="text-sm font-semibold text-slate-800">{formatCurrency(amount)}</span>
+                      <span className="text-sm font-semibold text-slate-800">{formatCurrency(amount, userCurrency)}</span>
                     </div>
                     <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                       <div
