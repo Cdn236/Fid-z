@@ -28,7 +28,7 @@ export default function OnboardingScreen({ onAccepted }: Props) {
             <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
               <Shield className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-xl font-bold text-white">Welcome to ReceiptLedger</h1>
+            <h1 className="text-xl font-bold text-white">Welcome to Fidèz</h1>
             <p className="text-sm text-cyan-50 mt-1">Please review and accept our policies to continue</p>
           </div>
 
@@ -48,12 +48,12 @@ export default function OnboardingScreen({ onAccepted }: Props) {
                   <h2 className="text-base font-bold text-slate-800">Terms & Conditions</h2>
                 </div>
                 <div className="text-sm text-slate-600 space-y-3 max-h-64 overflow-y-auto pr-2">
-                  <p>1. <strong>Service Description.</strong> ReceiptLedger is an AI-powered bookkeeping application that processes receipt images to extract, categorize, and book transactions automatically.</p>
+                  <p>1. <strong>Service Description.</strong> Fidèz is an AI-powered bookkeeping application that processes receipt images to extract, categorize, and book transactions automatically.</p>
                   <p>2. <strong>User Responsibilities.</strong> You are responsible for the accuracy of uploaded receipts and for reviewing AI-generated categorizations. The app is a tool to assist with bookkeeping, not a replacement for professional accounting advice.</p>
                   <p>3. <strong>Data Storage.</strong> Your receipt images and financial data are stored securely in encrypted databases. You retain ownership of all your data and may export or delete it at any time.</p>
                   <p>4. <strong>AI Accuracy.</strong> While we strive for high accuracy in OCR extraction and categorization, AI results may not always be correct. You should review flagged transactions before finalizing your books.</p>
                   <p>5. <strong>Acceptable Use.</strong> You agree not to upload fraudulent, illegal, or copyrighted material you do not own. You agree to comply with all applicable tax and financial regulations.</p>
-                  <p>6. <strong>Limitation of Liability.</strong> ReceiptLedger is provided "as is" without warranties. We are not liable for financial losses resulting from misclassification or data errors.</p>
+                  <p>6. <strong>Limitation of Liability.</strong> Fidèz is provided "as is" without warranties. We are not liable for financial losses resulting from misclassification or data errors.</p>
                   <p>7. <strong>Account Security.</strong> You are responsible for keeping your login credentials secure and for all activities under your account.</p>
                 </div>
                 <label className="flex items-center gap-2 mt-4 cursor-pointer">
@@ -125,7 +125,7 @@ export default function OnboardingScreen({ onAccepted }: Props) {
                   className="w-full py-2.5 bg-cyan-600 text-white rounded-lg text-sm font-semibold hover:bg-cyan-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  Start Using ReceiptLedger
+                  Start Using Fidèz
                 </button>
               </div>
             )}

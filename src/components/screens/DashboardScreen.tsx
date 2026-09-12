@@ -190,16 +190,20 @@ export default function DashboardScreen({ transactions, categories, userCurrency
       )}
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="Income" value={formatCurrency(stats.totalIncome, userCurrency)} icon={TrendingUp} color="emerald" />
-        <StatCard label="Expenses" value={formatCurrency(stats.totalExpenses, userCurrency)} icon={TrendingDown} color="rose" />
+      <div className="grid grid-cols-2 gap-3 items-stretch">
         <StatCard
           label="Net Cash Flow"
           value={formatCurrency(stats.netCashFlow, userCurrency)}
           icon={Wallet}
           color={stats.netCashFlow >= 0 ? 'emerald' : 'rose'}
+          description="Total income minus expenses in this period"
+          large
         />
-        <StatCard label="Transactions" value={String(stats.expenseCount)} icon={Receipt} color="cyan" />
+        <div className="flex flex-col gap-3">
+          <StatCard label="Income" value={formatCurrency(stats.totalIncome, userCurrency)} icon={TrendingUp} color="emerald" />
+          <StatCard label="Expenses" value={formatCurrency(stats.totalExpenses, userCurrency)} icon={TrendingDown} color="rose" />
+          <StatCard label="Transactions" value={String(stats.expenseCount)} icon={Receipt} color="cyan" />
+        </div>
       </div>
 
       {/* Cash flow chart */}
@@ -319,24 +323,44 @@ function StatCard({
   value,
   icon: Icon,
   color,
+  description,
+  large = false,
 }: {
   label: string;
   value: string;
   icon: typeof TrendingUp;
   color: 'emerald' | 'rose' | 'cyan';
+  description?: string;
+  large?: boolean;
 }) {
   const colors = {
     emerald: 'bg-emerald-50 text-emerald-600',
     rose: 'bg-rose-50 text-rose-600',
     cyan: 'bg-cyan-50 text-cyan-600',
   };
-  return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-3.5">
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 ${colors[color]}`}>
-        <Icon className="w-4 h-4" />
+  if (large) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col justify-center gap-3">
+        <div className="flex items-center gap-2">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colors[color]}`}>
+            <Icon className="w-5 h-5" />
+          </div>
+          <p className="text-sm font-semibold text-slate-700">{label}</p>
+        </div>
+        <p className="text-5xl font-extrabold text-slate-900 leading-none">{value}</p>
+        {description && <p className="text-xs text-slate-400">{description}</p>}
       </div>
-      <p className="text-xs text-slate-400 mb-0.5">{label}</p>
-      <p className="text-base font-bold text-slate-900">{value}</p>
+    );
+  }
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 px-3 py-2.5 flex items-center gap-3 flex-1">
+      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${colors[color]}`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs text-slate-400">{label}</p>
+        <p className="text-base font-bold text-slate-900">{value}</p>
+      </div>
     </div>
   );
 }

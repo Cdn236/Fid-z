@@ -217,7 +217,7 @@ export default function SettingsScreen({ onShowTerms, onShowPrivacy }: Props) {
         onToggle={() => setExpandedSection(expandedSection === 'backup' ? null : 'backup')}
       >
         <p className="text-xs text-slate-400 mb-3">
-          Your data is securely stored in your ReceiptLedger account. To back up to Google Drive or other cloud storage, connect your email below.
+          Your data is securely stored in your Fidèz account. To back up to Google Drive or other cloud storage, connect your email below.
         </p>
         <button
           onClick={() => alert('Cloud backup integration requires connecting your Google account. This feature will be available in a future update.')}
@@ -270,7 +270,7 @@ export default function SettingsScreen({ onShowTerms, onShowPrivacy }: Props) {
         Sign Out
       </button>
 
-      <p className="text-center text-xs text-slate-400 pt-2">ReceiptLedger v1.0.0</p>
+      <p className="text-center text-xs text-slate-400 pt-2">Fidèz v1.0.0</p>
     </div>
   );
 }

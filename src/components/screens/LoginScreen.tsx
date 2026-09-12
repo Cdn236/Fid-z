@@ -38,7 +38,7 @@ export default function LoginScreen() {
           <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-cyan-500/20">
             <Camera className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">ReceiptLedger</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Fidèz</h1>
           <p className="text-sm text-slate-500 mt-1">AI-powered bookkeeping from your receipts</p>
         </div>
 

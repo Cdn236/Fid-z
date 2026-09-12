@@ -121,12 +121,9 @@ export default function App() {
       {/* Header */}
       <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-teal-600 rounded-lg flex items-center justify-center">
-            <Camera className="w-4 h-4 text-white" />
-          </div>
           <div>
-            <h1 className="text-base font-bold text-slate-900 leading-tight">ReceiptLedger</h1>
-            <p className="text-[10px] text-slate-400 leading-tight">AI Bookkeeping</p>
+            <h1 className="text-base font-bold text-slate-900 leading-tight">Fidèz</h1>
+            <p className="text-[10px] text-slate-400 leading-tight">Your Ai Bookkeeping Assistant</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -315,12 +312,12 @@ function LegalModal({ type, onClose }: { type: 'terms' | 'privacy'; onClose: () 
         <div className="overflow-y-auto px-5 py-4 text-sm text-slate-600 space-y-3">
           {type === 'terms' ? (
             <>
-              <p>1. <strong>Service Description.</strong> ReceiptLedger is an AI-powered bookkeeping application that processes receipt images to extract, categorize, and book transactions automatically.</p>
+              <p>1. <strong>Service Description.</strong> Fidèz is an AI-powered bookkeeping application that processes receipt images to extract, categorize, and book transactions automatically.</p>
               <p>2. <strong>User Responsibilities.</strong> You are responsible for the accuracy of uploaded receipts and for reviewing AI-generated categorizations.</p>
               <p>3. <strong>Data Storage.</strong> Your receipt images and financial data are stored securely in encrypted databases. You retain ownership of all your data.</p>
               <p>4. <strong>AI Accuracy.</strong> AI results may not always be correct. Review flagged transactions before finalizing your books.</p>
               <p>5. <strong>Acceptable Use.</strong> You agree not to upload fraudulent or illegal material. Comply with all applicable tax and financial regulations.</p>
-              <p>6. <strong>Limitation of Liability.</strong> ReceiptLedger is provided "as is" without warranties.</p>
+              <p>6. <strong>Limitation of Liability.</strong> Fidèz is provided "as is" without warranties.</p>
               <p>7. <strong>Account Security.</strong> You are responsible for keeping your login credentials secure.</p>
             </>
           ) : (
