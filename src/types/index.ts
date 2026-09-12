@@ -127,6 +127,7 @@ export interface ExtractionResult {
   category_name: string;
   subcategory: string;
   transaction_type: TransactionType;
+  description?: string | null;
 }
 
 export interface AuthSession {

@@ -1,0 +1,8 @@
+# Supabase CLI configuration for Fidèz
+# This is used by `supabase functions deploy` and `supabase functions serve`.
+
+project_id = "fidez"
+
+[functions.extract-receipt]
+# Verify the caller by requiring the authenticated user's JWT (see index.ts).
+verify_jwt = true

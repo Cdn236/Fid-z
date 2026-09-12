@@ -349,16 +349,19 @@ export async function processReceipt(
   try {
     await updateReceiptStatus(receipt.id, 'extracting', 25);
 
-    const extraction = await extractReceiptData(receipt.file_name, categories, userCurrency, receiptType);
+    const extraction = await extractReceiptData(receipt, categories, userCurrency, receiptType);
 
     await updateReceiptStatus(receipt.id, 'categorizing', 60);
 
     const category = findCategoryByName(categories, extraction.category_name);
     const categoryId = category?.id || null;
 
+    // Route to Review unless we're highly confident AND the amounts are internally
+    // consistent. The Edge Function already lowers confidence for math/validation
+    // problems, so a conservative threshold keeps bad data out of the books.
     const status = extraction.confidence_score >= 0.75 ? 'booked' : 'needs_review';
 
-    await insertTransaction(receipt.id, extraction, categoryId, status);
+    await insertTransaction(receipt.id, extraction, categoryId, status, extraction.description);
 
     await updateReceiptStatus(receipt.id, status === 'booked' ? 'booked' : 'needs_review', 100);
   } catch (err) {

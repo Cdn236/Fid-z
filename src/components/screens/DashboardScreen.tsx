@@ -300,16 +300,33 @@ function StatCard({
     rose: 'bg-rose-50 text-rose-600',
     cyan: 'bg-cyan-50 text-cyan-600',
   };
+
+  /**
+   * Shrink-to-fit font size for the large figure. Scales down for long figures so
+   * the number never overflows the card (especially narrow mobile cards), while
+   * staying larger than the smaller stat-card text (text-base = 16px).
+   */
+  const largeFontSize = () => {
+    const len = Math.max(value.length, 1);
+    return Math.max(20, Math.min(30, Math.floor(260 / len)));
+  };
+
   if (large) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col justify-center gap-3">
-        <div className="flex items-center gap-2">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colors[color]}`}>
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 min-w-0 flex flex-col justify-center gap-3 overflow-hidden">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${colors[color]}`}>
             <Icon className="w-5 h-5" />
           </div>
-          <p className="text-sm font-semibold text-slate-700">{label}</p>
+          <p className="text-sm font-semibold text-slate-700 min-w-0 truncate">{label}</p>
         </div>
-        <p className="text-5xl font-extrabold text-slate-900 leading-none">{value}</p>
+        <p
+          className="font-extrabold text-slate-900 leading-none text-center sm:text-left"
+          style={{ fontSize: `${largeFontSize()}px` }}
+          title={value}
+        >
+          {value}
+        </p>
         {description && <p className="text-xs text-slate-400">{description}</p>}
       </div>
     );

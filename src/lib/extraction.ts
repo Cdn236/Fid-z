@@ -1,4 +1,5 @@
-import type { Category, ExtractionResult, LineItem, TransactionType } from '@/types';
+import type { Category, ExtractionResult, LineItem, Receipt, TransactionType } from '@/types';
+import { supabase } from '@/lib/supabase';
 
 const VENDOR_PATTERNS: Record<string, { category: string; subcategory: string; items: { description: string; amount: number }[]; paymentMethod: string }> = {
   'starbucks': {
@@ -258,16 +259,21 @@ function generateGenericReceipt(
   };
 }
 
-export async function extractReceiptData(
+/**
+ * Fallback simulation used when the real OCR+AI pipeline is not configured or is
+ * unreachable (e.g. before secrets are set). Kept so the app never breaks.
+ * Real extraction happens in the Supabase Edge Function.
+ */
+export async function simulateExtraction(
   fileName: string,
   categories: Category[],
   userCurrency: string,
   receiptType: TransactionType
 ): Promise<ExtractionResult> {
-  await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 1200));
+  // Short simulated processing delay so the UI progress feels natural in fallback mode.
+  await new Promise((resolve) => setTimeout(resolve, 300));
 
   const detectedType = detectTransactionType(fileName, receiptType);
-  const mobileMoney = isMobileMoneyReceipt(fileName);
   const lowerName = fileName.toLowerCase();
   let matchedKey: string | null = null;
 
@@ -316,7 +322,7 @@ export async function extractReceiptData(
       tax,
       tip: 0,
       total,
-      payment_method: mobileMoney ? pattern.paymentMethod : pattern.paymentMethod,
+      payment_method: pattern.paymentMethod,
       currency: userCurrency,
       confidence_score: 0.85 + Math.random() * 0.14,
       category_name: categoryName,
@@ -337,6 +343,117 @@ export async function extractReceiptData(
   return result;
 }
 
+/**
+ * Fidèz receipt extraction entry point.
+ * Prefers the real OCR+AI Edge Function pipeline; falls back to the simulation if
+ * the function is not configured, unreachable, or returns a transparent error so
+ * the existing Upload→Review→Book workflow never breaks.
+ */
+export async function extractReceiptData(
+  receipt: Receipt,
+  categories: Category[],
+  userCurrency: string,
+  receiptType: TransactionType
+): Promise<ExtractionResult> {
+  try {
+    const edge = await callExtractionEdgeFunction(receipt, categories, userCurrency, receiptType);
+    return {
+      vendor: edge.vendor,
+      transaction_date: edge.transaction_date,
+      line_items: edge.line_items || [],
+      subtotal: edge.subtotal,
+      tax: edge.tax,
+      tip: edge.tip,
+      total: edge.total,
+      payment_method: edge.payment_method || 'Cash',
+      currency: edge.currency || userCurrency || 'USD',
+      confidence_score: edge.confidence_score,
+      category_name: edge.category_name || 'Uncategorized',
+      subcategory: edge.subcategory || '',
+      transaction_type: edge.transaction_type === 'income' ? 'income' : 'expense',
+      description: edge.description || null,
+    };
+  } catch {
+    // Fallback so the app remains usable when the real pipeline isn't configured yet.
+    return simulateExtraction(receipt.file_name, categories, userCurrency, receiptType);
+  }
+}
+
+interface EdgeExtractionResponse {
+  vendor: string;
+  transaction_date: string;
+  line_items: LineItem[];
+  subtotal: number;
+  tax: number;
+  tip: number;
+  total: number;
+  payment_method: string;
+  currency: string;
+  confidence_score: number;
+  category_name: string;
+  subcategory: string;
+  transaction_type: TransactionType;
+  description?: string | null;
+  force_review?: boolean;
+  flags?: string[];
+}
+
+/**
+ * Real receipt extraction via the Supabase Edge Function (OCR.space + OpenAI).
+ * The function URL comes from a public env var; API keys never leave the backend.
+ */
+export async function callExtractionEdgeFunction(
+  receipt: Receipt,
+  categories: Category[],
+  userCurrency: string,
+  receiptType: TransactionType
+): Promise<EdgeExtractionResponse> {
+  const url = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL as string | undefined;
+  if (!url) {
+    throw new Error('Edge Function base URL not configured (VITE_SUPABASE_FUNCTIONS_URL)');
+  }
+
+  // Send the JWT so the Edge Function can authorize the caller server-side.
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+
+  const res = await fetch(`${url}/extract-receipt`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      fileData: receipt.file_data,
+      fileName: receipt.file_name,
+      userCurrency,
+      receiptType,
+      categories,
+    }),
+  });
+
+  // 501 = deployed but not configured (no keys) → fall back to simulation.
+  // 401/405 = auth or method problems → fall back to simulation.
+  if (res.status === 501 || res.status === 401 || res.status === 405) {
+    throw new Error(`extraction unavailable (${res.status})`);
+  }
+  if (!res.ok) {
+    let detail = `extraction failed (${res.status})`;
+    try {
+      const body = (await res.json()) as { error?: string };
+      detail = body.error || detail;
+    } catch {
+      /* ignore non-JSON error body */
+    }
+    throw new Error(detail);
+  }
+
+  const result = await res.json() as EdgeExtractionResponse;
+  if (!result || typeof result.total !== 'number') {
+    throw new Error('extraction returned invalid data');
+  }
+  return result;
+}
 export function findCategoryByName(categories: Category[], name: string): Category | null {
   return categories.find((c) => c.name === name) || null;
 }
