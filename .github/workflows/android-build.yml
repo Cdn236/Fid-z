@@ -43,6 +43,17 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew bundleRelease
+      - name: Build Android APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: fidez-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
